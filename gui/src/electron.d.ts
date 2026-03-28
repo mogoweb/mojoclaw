@@ -1,10 +1,16 @@
 export interface ElectronAPI {
   executeCommand: (command: string, args?: string[]) => Promise<{ stdout: string; stderr: string }>;
   cancelCommand: (commandId: string) => Promise<void>;
-  getSettings: () => Promise<Record<string, unknown>>;
+  loadSettings: () => Promise<Record<string, unknown>>;
   saveSettings: (settings: Record<string, unknown>) => Promise<void>;
-  onCommandProgress: (callback: (data: { commandId: string; progress: number; message?: string }) => void) => () => void;
+  validatePath: (path: string) => Promise<boolean>;
+  checkRunningOperations: () => Promise<boolean>;
+  confirmQuit: () => Promise<void>;
+  showCloseDialog: () => Promise<boolean>;
+  onCommandProgress: (callback: (data: { commandId: string; progress: number }) => void) => () => void;
   onCommandComplete: (callback: (data: { commandId: string; success: boolean; output: string; error?: string }) => void) => () => void;
+  onCheckRunningOperations: (callback: () => void) => () => void;
+  onOpenSettings: (callback: () => void) => () => void;
 }
 
 declare global {

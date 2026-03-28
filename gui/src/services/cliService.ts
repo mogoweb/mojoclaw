@@ -121,6 +121,11 @@ class CliService {
    * Subscribe to Electron IPC events
    */
   subscribeToElectronIPC(): void {
+    if (typeof window === 'undefined' || !window.electron) {
+      console.warn('Electron API not available, running in browser mode');
+      return;
+    }
+
     // Subscribe to progress events
     window.electron.onCommandProgress((data) => {
       const command = this.runningCommands.get(data.commandId);

@@ -1,7 +1,7 @@
 import { app, BrowserWindow, shell, Menu, dialog, Tray, nativeImage } from 'electron';
 import { join } from 'path';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
-import './ipc';
+require('./ipc.cjs');
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
@@ -240,7 +240,7 @@ function createWindow(): void {
     show: false,
     title: 'OpenClaw GUI',
     webPreferences: {
-      preload: join(__dirname, '../preload/index.js'),
+      preload: join(__dirname, 'preload/index.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: false,
