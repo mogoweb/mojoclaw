@@ -1,16 +1,21 @@
 import type { ReactNode } from 'react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Layout } from './components/layout/layout';
 import { Dashboard } from './components/dashboard/dashboard';
 import { Settings } from './components/settings/settings';
 import { About } from './components/settings/about';
 import { OperationDialog } from './components/operations/operation-dialog';
+import { HistoryViewer } from './components/history/history-viewer';
+import { HelpDialog } from './components/help/help-dialog';
+import { StatusBar } from './components/status-bar/status-bar';
+import { ToastProvider, useToast } from './components/ui/toast';
 import { cliService } from './services/cliService';
 
 type View = 'dashboard' | 'operations' | 'history' | 'settings' | 'about' | 'help';
 
-function App(): ReactNode {
+function AppContent(): ReactNode {
   const [currentView, setCurrentView] = React.useState<View>('dashboard');
+  const [helpOpen, setHelpOpen] = React.useState(false);
   const [operationDialog, setOperationDialog] = React.useState({
     isOpen: false,
     title: '',
@@ -20,6 +25,33 @@ function App(): ReactNode {
     output: '',
     progress: 0,
   });
+  const toast = useToast();
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'F1') {
+        e.preventDefault();
+        setHelpOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    cliService.subscribeToElectronIPC();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = cliService.onComplete((data) => {
+      if (data.success) {
+        toast.success('Operation completed', `${data.command} finished successfully`);
+      } else {
+        toast.error('Operation failed', data.error || 'An error occurred');
+      }
+    });
+    return unsubscribe;
+  }, [toast]);
 
   const handleNavigate = (view: string): void => {
     if (view === 'quick-scan' || view === 'full-analysis' || view === 'generate-report') {
@@ -79,7 +111,7 @@ function App(): ReactNode {
       ...prev,
       status: 'cancelled',
     }));
-    cliService.cancelCommand(''); // Will need actual commandId
+    cliService.cancelCommand('');
   };
 
   return (
@@ -96,49 +128,8 @@ function App(): ReactNode {
             </p>
           </div>
         )}
-        {currentView === 'history' && (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold mb-4">History</h2>
-            <p className="text-muted-foreground">
-              Operation history will be displayed here.
-            </p>
-          </div>
-        )}
-        {currentView === 'help' && (
-          <div className="p-6 max-w-4xl">
-            <div className="bg-card border border-border rounded-lg p-6">
-              <h2 className="text-2xl font-bold mb-4">Help & Documentation</h2>
-              <p className="text-muted-foreground mb-4">
-                Use the sidebar to navigate between Dashboard, Operations, History, and Settings.
-              </p>
-              <div className="space-y-4">
-                <section>
-                  <h3 className="font-semibold mb-2">Quick Actions</h3>
-                  <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
-                    <li><strong>Quick Scan:</strong> Fast analysis of current project</li>
-                    <li><strong>Full Analysis:</strong> Comprehensive in-depth analysis</li>
-                    <li><strong>Generate Report:</strong> Create detailed reports</li>
-                  </ul>
-                </section>
-                <section>
-                  <h3 className="font-semibold mb-2">Getting Help</h3>
-                  <p className="text-sm text-muted-foreground">
-                    For more information, visit the{' '}
-                    <a
-                      href="https://github.com/mogoweb/mojoclaw"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline"
-                    >
-                      OpenClaw GitHub repository
-                    </a>
-                    .
-                  </p>
-                </section>
-              </div>
-            </div>
-          </div>
-        )}
+        {currentView === 'history' && <HistoryViewer />}
+        <StatusBar />
       </Layout>
 
       <OperationDialog
@@ -152,7 +143,17 @@ function App(): ReactNode {
         onCancel={handleCancelOperation}
         onClose={handleCloseDialog}
       />
+
+      <HelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
     </>
+  );
+}
+
+function App(): ReactNode {
+  return (
+    <ToastProvider>
+      <AppContent />
+    </ToastProvider>
   );
 }
 

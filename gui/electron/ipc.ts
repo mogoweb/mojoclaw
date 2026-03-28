@@ -1,5 +1,7 @@
-import { ipcMain } from 'electron';
+import { ipcMain, app, dialog, BrowserWindow } from 'electron';
 import { spawn, ChildProcess } from 'child_process';
+import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { join } from 'path';
 
 interface RunningCommand {
   id: string;
@@ -123,21 +125,117 @@ ipcMain.handle('openclaw:cancel', (_event, commandId: string): Promise<void> => 
   });
 });
 
+function getSettingsPath(): string {
+  const configDir = app.getPath('userData');
+  return join(configDir, 'settings.json');
+}
+
+interface AppSettings {
+  openclawPath: string;
+  theme: 'light' | 'dark' | 'system';
+  defaultScanMode: 'quick' | 'full';
+  outputFormat: 'text' | 'json' | 'html';
+  autoCheckUpdates: boolean;
+  showNotifications: boolean;
+  minimizeToTray: boolean;
+  windowBounds: {
+    x?: number;
+    y?: number;
+    width: number;
+    height: number;
+  };
+}
+
+const defaultSettings: AppSettings = {
+  openclawPath: 'openclaw',
+  theme: 'system',
+  defaultScanMode: 'quick',
+  outputFormat: 'text',
+  autoCheckUpdates: true,
+  showNotifications: true,
+  minimizeToTray: false,
+  windowBounds: {
+    width: 1200,
+    height: 800,
+  },
+};
+
 /**
- * Get application settings
+ * Load application settings
  */
-ipcMain.handle('settings:get', (): Promise<Record<string, unknown>> => {
-  return Promise.resolve({
-    // Default settings
-    openclawPath: '',
-    theme: 'dark',
-  });
+ipcMain.handle('settings:load', async (): Promise<AppSettings | null> => {
+  try {
+    const settingsPath = getSettingsPath();
+    if (existsSync(settingsPath)) {
+      const data = readFileSync(settingsPath, 'utf-8');
+      return { ...defaultSettings, ...JSON.parse(data) };
+    }
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  }
+  return defaultSettings;
 });
 
 /**
  * Save application settings
  */
-ipcMain.handle('settings:save', (_event, settings: Record<string, unknown>): Promise<void> => {
-  // TODO: Implement actual settings persistence
-  return Promise.resolve();
+ipcMain.handle('settings:save', async (_event, settings: AppSettings): Promise<void> => {
+  try {
+    const settingsPath = getSettingsPath();
+    const configDir = app.getPath('userData');
+    if (!existsSync(configDir)) {
+      mkdirSync(configDir, { recursive: true });
+    }
+    writeFileSync(settingsPath, JSON.stringify(settings, null, 2));
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+    throw error;
+  }
+});
+
+/**
+ * Validate a path
+ */
+ipcMain.handle('settings:validate-path', async (_event, path: string): Promise<boolean> => {
+  try {
+    const { accessSync, constants } = await import('fs');
+    accessSync(path, constants.X_OK);
+    return true;
+  } catch {
+    return false;
+  }
+});
+
+/**
+ * Check if there are running operations
+ */
+ipcMain.handle('app:check-running', async (): Promise<boolean> => {
+  return runningCommands.size > 0;
+});
+
+/**
+ * Confirm and quit application
+ */
+ipcMain.handle('app:confirm-quit', async (): Promise<void> => {
+  const windows = BrowserWindow.getAllWindows();
+  for (const win of windows) {
+    win.destroy();
+  }
+  app.quit();
+});
+
+/**
+ * Show confirm dialog for closing with running operations
+ */
+ipcMain.handle('app:show-close-dialog', async (): Promise<boolean> => {
+  const result = await dialog.showMessageBox({
+    type: 'warning',
+    title: 'Operations Running',
+    message: 'There are operations currently running.',
+    detail: 'Are you sure you want to quit? Running operations will be terminated.',
+    buttons: ['Quit', 'Cancel'],
+    defaultId: 1,
+    cancelId: 1,
+  });
+  return result.response === 0;
 });
