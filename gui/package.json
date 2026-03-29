@@ -8,10 +8,10 @@
   "author": "",
   "homepage": "",
   "scripts": {
-    "dev": "vite",
+    "dev": "concurrently --kill-others \"vite\" \"npm run electron:compile && wait-on http://localhost:5173 && electron .\"",
     "build": "tsc -b && vite build",
     "electron:compile": "tsc -p tsconfig.electron.json && node -e \"const fs=require('fs');const p='dist/electron';['main','ipc','preload/index'].forEach(f=>{try{fs.renameSync(p+'/'+f+'.js',p+'/'+f+'.cjs')}catch(e){}})\"",
-    "electron:dev": "concurrently \"npm run dev\" \"npm run electron:compile && wait-on http://localhost:5173 && electron .\"",
+    "electron:dev": "npm run dev",
     "electron:build": "rm -rf dist && npm run build && tsc -p tsconfig.electron.json",
     "build:app": "electron-builder",
     "lint": "eslint .",

@@ -257,20 +257,19 @@ function createWindow(): void {
   mainWindow.on('maximize', saveWindowState);
   mainWindow.on('unmaximize', saveWindowState);
 
-  // Check for running operations before close
-  mainWindow.on('close', async (event) => {
-    if (!isQuitting && process.platform !== 'darwin') {
+  // Handle close event
+  mainWindow.on('close', (event) => {
+    if (!isQuitting) {
       event.preventDefault();
-      mainWindow?.webContents.send('check-running-operations');
+      mainWindow?.hide();
     }
   });
 
   // Load the app
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
-    mainWindow.webContents.openDevTools();
   } else {
-    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    mainWindow.loadFile(join(__dirname, '../dist/index.html'));
   }
 
   // Show window when ready to prevent visual flash
@@ -288,9 +287,15 @@ function createWindow(): void {
 let tray: Tray | null = null;
 
 function createTray(): void {
-  // Create a simple tray icon (16x16 transparent)
-  const icon = nativeImage.createEmpty();
-  
+  const iconPath = join(__dirname, isDev ? '../../public/icon.png' : '../dist/icon.png');
+  let icon;
+
+  if (existsSync(iconPath)) {
+    icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
+  } else {
+    icon = nativeImage.createEmpty();
+  }
+
   tray = new Tray(icon);
   tray.setToolTip('OpenClaw GUI');
 
@@ -347,9 +352,19 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (process.platform !== 'darwin' && !isQuitting) {
     app.quit();
   }
+});
+
+app.on('before-quit', () => {
+  isQuitting = true;
+  if (tray) {
+    tray.destroy();
+    tray = null;
+  }
+  // Force exit to ensure concurrently terminates vite server
+  setTimeout(() => app.exit(0), 100);
 });
 
 export { mainWindow, isDev };
