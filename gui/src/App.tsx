@@ -45,7 +45,7 @@ function AppContent(): ReactNode {
   useEffect(() => {
     const unsubscribe = cliService.onComplete((data) => {
       if (data.success) {
-        toast.success('Operation completed', `${data.command} finished successfully`);
+        toast.success('Operation completed', 'Operation finished successfully');
       } else {
         toast.error('Operation failed', data.error || 'An error occurred');
       }

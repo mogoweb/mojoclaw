@@ -269,7 +269,7 @@ function createWindow(): void {
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(join(__dirname, '../dist/index.html'));
+    mainWindow.loadFile(join(__dirname, '../index.html'));
   }
 
   // Show window when ready to prevent visual flash
@@ -287,7 +287,7 @@ function createWindow(): void {
 let tray: Tray | null = null;
 
 function createTray(): void {
-  const iconPath = join(__dirname, isDev ? '../../public/icon.png' : '../dist/icon.png');
+  const iconPath = join(__dirname, isDev ? '../../public/icon.png' : '../icon.png');
   let icon;
 
   if (existsSync(iconPath)) {

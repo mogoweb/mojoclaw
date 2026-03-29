@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { cliService } from '../services/cliService';
 
-vi.mock('../types/cli', () => ({
-  type CommandExecution: {},
-}));
+vi.mock('../types/cli', () => ({}));
 
 describe('CliService', () => {
   beforeEach(() => {
