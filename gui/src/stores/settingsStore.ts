@@ -64,7 +64,7 @@ export const useSettingsStore = create<SettingsState>()(
           if (window.electron) {
             const loaded = await window.electron.loadSettings();
             if (loaded) {
-              set({ settings: loaded, isLoading: false });
+              set({ settings: loaded as unknown as AppSettings, isLoading: false });
               return;
             }
           }
@@ -81,7 +81,7 @@ export const useSettingsStore = create<SettingsState>()(
         set({ isLoading: true, error: null });
         try {
           if (window.electron) {
-            await window.electron.saveSettings(get().settings);
+            await window.electron.saveSettings(get().settings as unknown as Record<string, unknown>);
           }
           set({ isLoading: false });
         } catch (error) {

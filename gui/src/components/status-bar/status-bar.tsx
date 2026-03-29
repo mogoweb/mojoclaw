@@ -20,9 +20,11 @@ export function StatusBar(): ReactNode {
     const interval = setInterval(checkRunning, 500);
 
     const unsubscribe = cliService.onComplete((data) => {
+      const commands = cliService.getRunningCommands();
+      const cmd = commands.find(c => c.commandId === data.commandId);
       setLastResult({
         success: data.success,
-        command: data.command,
+        command: cmd?.command || 'Unknown',
         timestamp: Date.now(),
       });
     });
