@@ -259,7 +259,7 @@ function createWindow(): void {
 
   // Handle close event
   mainWindow.on('close', (event) => {
-    if (!isQuitting && tray) {
+    if (!isQuitting) {
       event.preventDefault();
       mainWindow?.hide();
     }
@@ -292,9 +292,7 @@ function createTray(): void {
 
   if (existsSync(iconPath)) {
     icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 });
-    console.log('Tray icon loaded from:', iconPath);
   } else {
-    console.log('Tray icon not found at:', iconPath);
     icon = nativeImage.createEmpty();
   }
 
@@ -354,7 +352,7 @@ app.whenReady().then(() => {
 });
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  if (process.platform !== 'darwin' && !isQuitting) {
     app.quit();
   }
 });
