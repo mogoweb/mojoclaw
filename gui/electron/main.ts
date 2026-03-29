@@ -363,6 +363,8 @@ app.on('before-quit', () => {
     tray.destroy();
     tray = null;
   }
+  // Force exit to ensure concurrently terminates vite server
+  setTimeout(() => app.exit(0), 100);
 });
 
 export { mainWindow, isDev };
