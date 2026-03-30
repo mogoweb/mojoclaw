@@ -12,22 +12,22 @@ export function Dashboard({ onNavigate }: DashboardProps): ReactNode {
   const quickActions = [
     {
       id: 'quick-scan',
-      title: 'Quick Scan',
-      description: 'Run a quick analysis scan',
+      title: 'Health Check',
+      description: 'Run a quick health check',
       icon: '🔍',
       action: () => onNavigate?.('quick-scan'),
     },
     {
       id: 'full-analysis',
-      title: 'Full Analysis',
-      description: 'Complete in-depth analysis',
+      title: 'System Status',
+      description: 'View complete system status',
       icon: '📊',
       action: () => onNavigate?.('full-analysis'),
     },
     {
       id: 'generate-report',
-      title: 'Generate Report',
-      description: 'Create a detailed report',
+      title: 'Models Info',
+      description: 'View available models',
       icon: '📝',
       action: () => onNavigate?.('generate-report'),
     },
