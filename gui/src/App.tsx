@@ -56,14 +56,14 @@ function AppContent(): ReactNode {
   const handleNavigate = (view: string): void => {
     if (view === 'quick-scan' || view === 'full-analysis' || view === 'generate-report') {
       const commands = {
-        'quick-scan': ['scan', '--quick'],
-        'full-analysis': ['analyze'],
-        'generate-report': ['report', '--output', 'report.json'],
+        'quick-scan': ['health'],
+        'full-analysis': ['status'],
+        'generate-report': ['models', 'status'],
       };
       const titles = {
-        'quick-scan': 'Quick Scan',
-        'full-analysis': 'Full Analysis',
-        'generate-report': 'Generate Report',
+        'quick-scan': 'Health Check',
+        'full-analysis': 'System Status',
+        'generate-report': 'Models Info',
       };
 
       setOperationDialog({
